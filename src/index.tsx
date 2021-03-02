@@ -2,22 +2,24 @@ import RowItem from './components/RowItem';
 import * as React from 'react';
 import { render } from 'react-dom';
 
-import Table from '@contentful/forma-36-react-components/dist/components/Table/Table'
-import TableRow from '@contentful/forma-36-react-components/dist/components/Table/TableRow';
-import TableBody from '@contentful/forma-36-react-components/dist/components/Table/TableBody';
-import TableHead from '@contentful/forma-36-react-components/dist/components/Table/TableHead';
-import Note from '@contentful/forma-36-react-components/dist/components/Note';
-import Button from '@contentful/forma-36-react-components/dist/components/Button'
-import Paragraph from '@contentful/forma-36-react-components/dist/components/Typography/Paragraph';
-import CheckboxField from '@contentful/forma-36-react-components/dist/components/CheckboxField';
-import FieldGroup from '@contentful/forma-36-react-components/dist/components/Form/FieldGroup';
-
+import {
+  Table,
+  TableRow,
+  TableBody,
+  TableHead,
+  Note,
+  Button,
+  Paragraph,
+  CheckboxField,
+  FieldGroup,
+  Flex,
+} from '@contentful/forma-36-react-components';
 import { init, FieldExtensionSDK } from 'contentful-ui-extensions-sdk';
 import '@contentful/forma-36-react-components/dist/styles.css';
 import './index.css';
 import JsonCodemirror from './components/JsonCodemirror';
 import { Cell } from './components/Cell';
-let timeout;
+let timeout: number;
 interface AppProps {
   sdk: FieldExtensionSDK;
 }
@@ -25,7 +27,9 @@ interface AppProps {
 interface AppState {
   value?: { data: any[]; tableHeadings: any[] };
   changing?: object;
-  readOnly?: boolean;
+  editMode?: boolean;
+  showJson: boolean;
+  devMode: boolean;
 }
 
 export class App extends React.Component<AppProps, AppState> {
@@ -33,11 +37,13 @@ export class App extends React.Component<AppProps, AppState> {
     super(props);
     this.state = {
       changing: {},
-      readOnly: false,
+      editMode: false,
+      devMode: false,
       value: props.sdk.field.getValue() || {
         data: [{ 'Heading 1': { text: 'col 1' } }],
-        tableHeadings: [{ key: 'Heading 1' }]
-      }
+        tableHeadings: [{ key: 'Heading 1' }],
+      },
+      showJson: false,
     };
   }
 
@@ -58,7 +64,7 @@ export class App extends React.Component<AppProps, AppState> {
     window.removeEventListener('keydown', this.handleKeyPress);
   }
 
-  handleKeyPress = e => {
+  handleKeyPress = (e) => {
     //  @todo: revert input value on esc
     // if (e.key === 'Escape' && this.state.changing.id) {
     //   const { value } = this.state;
@@ -81,12 +87,12 @@ export class App extends React.Component<AppProps, AppState> {
             this.state.changing.id
           );
       this.setState({
-        changing: {}
+        changing: {},
       });
     }
   };
 
-  onExternalChange = value => {
+  onExternalChange = (value) => {
     console.log('external change', value);
     if (value) this.setState({ value });
   };
@@ -113,8 +119,8 @@ export class App extends React.Component<AppProps, AppState> {
       {
         value: {
           data: val,
-          tableHeadings
-        }
+          tableHeadings,
+        },
       },
       await this.update()
     );
@@ -129,8 +135,8 @@ export class App extends React.Component<AppProps, AppState> {
       {
         value: {
           data,
-          tableHeadings
-        }
+          tableHeadings,
+        },
       },
       await this.update()
     );
@@ -141,13 +147,13 @@ export class App extends React.Component<AppProps, AppState> {
     const headingName = `new column ${tableHeadings.length + 1}`;
     let newHeading = { key: headingName };
     tableHeadings.push(newHeading);
-    data.map(d => (d[headingName] = { text: '' }));
+    data.map((d) => (d[headingName] = { text: '' }));
     this.setState(
       {
         value: {
           data,
-          tableHeadings
-        }
+          tableHeadings,
+        },
       },
       await this.update()
     );
@@ -158,7 +164,7 @@ export class App extends React.Component<AppProps, AppState> {
     const toDelete = tableHeadings[tableHeadings.length - 1];
     console.log(toDelete);
 
-    toDelete && data.map(d => delete d[toDelete.key]);
+    toDelete && data.map((d) => delete d[toDelete.key]);
 
     tableHeadings.pop();
 
@@ -166,8 +172,8 @@ export class App extends React.Component<AppProps, AppState> {
       {
         value: {
           data,
-          tableHeadings
-        }
+          tableHeadings,
+        },
       },
       await this.update()
     );
@@ -179,16 +185,16 @@ export class App extends React.Component<AppProps, AppState> {
     const originalHeading = tableHeadings[i].key;
     tableHeadings[i].key = val;
 
-    data.map(d => {
+    data.map((d) => {
       this.renameObjectKey(d, originalHeading, val);
     });
     this.setState(
       {
         value: {
           data,
-          tableHeadings
+          tableHeadings,
         },
-        changing: {}
+        changing: {},
       },
       await this.update()
     );
@@ -202,7 +208,7 @@ export class App extends React.Component<AppProps, AppState> {
       console.log(tableHeadings[row]);
       tableHeadings[row] = {
         ...tableHeadings[row],
-        ...obj
+        ...obj,
       };
     } else {
       console.log(data[row], data[row][key]);
@@ -211,7 +217,7 @@ export class App extends React.Component<AppProps, AppState> {
       }
       data[row][key] = {
         ...data[row][key],
-        ...obj
+        ...obj,
       };
     }
 
@@ -219,9 +225,9 @@ export class App extends React.Component<AppProps, AppState> {
       {
         value: {
           data,
-          tableHeadings
+          tableHeadings,
         },
-        changing: {}
+        changing: {},
       },
       await this.update()
     );
@@ -256,9 +262,9 @@ export class App extends React.Component<AppProps, AppState> {
       {
         value: {
           data,
-          tableHeadings
+          tableHeadings,
         },
-        changing: {}
+        changing: {},
       },
       await this.update()
     );
@@ -269,7 +275,6 @@ export class App extends React.Component<AppProps, AppState> {
     this.setCell(key, row, data, isHeading);
     // this.setCellValue(key, row, data, data, isHeading);
   };
-
 
   moveRow = async (index: number, direction: string) => {
     const { data, tableHeadings } = this.getData();
@@ -283,8 +288,8 @@ export class App extends React.Component<AppProps, AppState> {
       {
         value: {
           data,
-          tableHeadings
-        }
+          tableHeadings,
+        },
       },
       await this.update()
     );
@@ -298,9 +303,17 @@ export class App extends React.Component<AppProps, AppState> {
     return { data: [], tableHeadings: [] };
   };
 
-  setChanging = changing => this.setState({ changing });
+  setChanging = (changing) => this.setState({ changing });
 
-  toggleReadOnly = () => this.setState({ readOnly: !this.state.readOnly });
+  toggleEditMode = () =>
+    this.setState((prevState) => ({
+      ...prevState,
+      devMode: false,
+      showJson: false,
+      editMode: !prevState.editMode,
+    }));
+  toggleDevMode = () =>
+    this.setState((prevState) => ({ ...prevState, devMode: !prevState.devMode }));
 
   // https://stackoverflow.com/a/14592469
   renameObjectKey = (obj: object, oldKey: string, newKey: string) => {
@@ -311,10 +324,9 @@ export class App extends React.Component<AppProps, AppState> {
     return obj;
   };
 
-  handleFocus = event => event.target.select();
+  handleFocus = (event) => event.target.select();
 
   render = () => {
-
     const { data, tableHeadings } = this.state.value;
     const cellDefaults: object = {
       handleFocus: this.handleFocus,
@@ -324,19 +336,28 @@ export class App extends React.Component<AppProps, AppState> {
       changing: this.state.changing,
     };
     return (
-      <div>
-        <div style={{ marginLeft: this.state.readOnly ? 0 : 42, overflow: 'scroll' }}>
+      <Flex flexDirection="column" marginBottom="spacingL">
+        <div style={{ overflow: 'auto' }}>
           <FieldGroup>
             <CheckboxField
-              labelText={'Read-only view'}
+              labelText="Enable Edit Mode"
               name="readonly"
-              checked={this.state.readOnly}
+              checked={this.state.editMode}
               value="yes"
-              onChange={this.toggleReadOnly}
-              labelIsLight={!this.state.readOnly}
-              id="readonly-checkbox"
+              onChange={this.toggleEditMode}
+              labelIsLight={!this.state.editMode}
+              style={{ paddingLeft: 5 }}
+              id="editmode-checkbox"
             />
           </FieldGroup>
+          <br />
+          {this.state.editMode && (
+            <Flex paddingBottom="spacingM">
+              <Paragraph>
+                Hint: press <strong>Enter</strong> to update cell data
+              </Paragraph>
+            </Flex>
+          )}
           {!data && (
             <Note noteType="warning">
               <code>data</code> object missing
@@ -353,10 +374,11 @@ export class App extends React.Component<AppProps, AppState> {
                 {tableHeadings &&
                   tableHeadings.map(
                     ({ key, ...rest }, i) =>
-                      key && !key.startsWith('__') && (
+                      key &&
+                      !key.startsWith('__') && (
                         <Cell
                           key={i}
-                          readOnly={this.state.readOnly}
+                          readOnly={!(this.state.editMode && this.state.devMode)}
                           isHeading
                           text={key}
                           headingKey={key}
@@ -372,12 +394,13 @@ export class App extends React.Component<AppProps, AppState> {
             </TableHead>
             <TableBody>
               {data &&
-                data.map((d, index) => (
-                  
+                data.map((dataItem, index) => (
                   <RowItem
-                    data={d}
+                    key={`row-${index}`}
+                    data={dataItem}
                     index={index}
-                    readOnly={this.state.readOnly}
+                    editMode={this.state.editMode}
+                    devMode={this.state.devMode}
                     moveRow={this.moveRow}
                     tableHeadings={tableHeadings}
                     dataLength={data.length}
@@ -387,41 +410,92 @@ export class App extends React.Component<AppProps, AppState> {
             </TableBody>
           </Table>
           <br />
-          <Paragraph>Hint: press Enter to update cell data</Paragraph>
-          <br />
-          <Button icon="Plus" onClick={this.addRow}>
-            Row
-          </Button>{' '}
-          <Button onClick={this.removeRow} buttonType="muted">
-            - row
-          </Button>{' '}
-          <Button icon="Plus" onClick={this.addColumn}>
-            column
-          </Button>{' '}
-          <Button onClick={this.removeColumn} buttonType="muted">
-            - column
-          </Button>
+          {this.state.editMode && (
+            <Flex paddingTop="spacingL" flexDirection="row">
+              <Button icon="Plus" onClick={this.addRow}>
+                Row
+              </Button>{' '}
+              <Button icon="Minus" onClick={this.removeRow} style={{ marginLeft: 15 }}>
+                Row
+              </Button>{' '}
+            </Flex>
+          )}
+          {this.state.devMode && (
+            <Flex paddingTop="spacingL" flexDirection="row">
+              <Button icon="Plus" onClick={this.addColumn} buttonType="muted">
+                Column
+              </Button>{' '}
+              <Button
+                icon="Minus"
+                onClick={this.removeColumn}
+                style={{ marginLeft: 15 }}
+                buttonType="muted">
+                Column
+              </Button>
+            </Flex>
+          )}
         </div>
         <br />
-        <JsonCodemirror
-          value={this.state.value}
-          onChange={async (editor, data, value) => {
-            // poor man's debounce
-            this.setState({ value });
-            if ( timeout ) return;
-            timeout = 5000;
-            setTimeout(async() => {
-              await this.update()
-              timeout = null;
-            }, timeout);
-          }}
-        />
-      </div>
+        <br />
+        {this.state.editMode && (
+          <CheckboxField
+            labelText="Develop mode"
+            name="devmode"
+            checked={this.state.devMode}
+            value="yes"
+            onChange={this.toggleDevMode}
+            labelIsLight={!this.state.devMode}
+            id="devmode-checkbox"
+          />
+        )}
+        <br />
+
+        {this.state.editMode && this.state.devMode && (
+          <Button
+            onClick={() => {
+              this.setState((prevState) => ({
+                ...prevState,
+                showJson: !prevState.showJson,
+              }));
+            }}
+            buttonType="muted">
+            toggle JSON
+          </Button>
+        )}
+        <br />
+        <br />
+        {this.state.showJson && (
+          <JsonCodemirror
+            value={this.state.value}
+            onChange={async (editor, data, value) => {
+              // poor man's debounce
+              this.setState({ value });
+              if (timeout) {
+                return;
+              }
+              timeout = 5000;
+              setTimeout(async () => {
+                await this.update();
+                timeout = 0;
+              }, timeout);
+            }}
+          />
+        )}
+      </Flex>
     );
   };
 }
 
-init(sdk => {
+init((sdk) => {
+  console.log(sdk);
+  // sdk.dialogs.openAlert({
+  //   title: 'fooooo',
+  //   message: 'aaaaa',
+  //   confirmLabel: 'bbbbb',
+  //   shouldCloseOnEscapePress: true,
+  //   shouldCloseOnOverlayClick: true
+  // });
+  sdk.window.startAutoResizer();
   render(<App sdk={sdk as FieldExtensionSDK} />, document.getElementById('root'));
 });
 
